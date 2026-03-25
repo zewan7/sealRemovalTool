@@ -7,9 +7,11 @@
 from PySide6.QtCore import QThread, Signal
 from PIL import Image, ImageEnhance
 import numpy as np
-import logging
 
-logger = logging.getLogger(__name__)
+from .stamp_detector import StampDetector, AdvancedStampRemover
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ImageProcessingThread(QThread):
@@ -21,7 +23,7 @@ class ImageProcessingThread(QThread):
     error = Signal(str)        # 错误信息
 
     def __init__(self, image_path=None, pil_image=None, rad_num=185, channel_index=0, 
-                 is_contrast=False, is_sharpness=False):
+                 is_contrast=False, is_sharpness=False, use_advanced_algorithm=True):
         super().__init__()
         self.image_path = image_path
         self.pil_image = pil_image
@@ -29,6 +31,7 @@ class ImageProcessingThread(QThread):
         self.channel_index = channel_index
         self.is_contrast = is_contrast
         self.is_sharpness = is_sharpness
+        self.use_advanced_algorithm = use_advanced_algorithm
         
         # 验证参数
         self._validate_parameters()
@@ -74,12 +77,9 @@ class ImageProcessingThread(QThread):
                 im = ImageEnhance.Sharpness(im).enhance(2.0)
                 self.progress.emit(60)
             
-            # 转换为NumPy数组
-            np_im = np.array(im)
-            self.progress.emit(70)
-            
             # 印章去除处理
-            result_image = self._remove_stamp(np_im)
+            self.progress.emit(70)
+            result_image = self._remove_stamp(im)
             self.progress.emit(90)
             
             # 发送完成信号
@@ -93,8 +93,45 @@ class ImageProcessingThread(QThread):
             self.error.emit(str(e))
             self.finished.emit(None)
 
-    def _remove_stamp(self, np_im):
-        """去除印章的核心算法"""
+    def _remove_stamp(self, pil_image: Image.Image) -> Image.Image:
+        """
+        去除印章的核心算法
+        
+        Args:
+            pil_image: PIL图像对象
+            
+        Returns:
+            处理后的PIL图像对象
+        """
+        try:
+            if self.use_advanced_algorithm:
+                # 使用高级印章检测算法
+                logger.info("使用高级印章检测算法")
+                remover = AdvancedStampRemover(
+                    method='auto',
+                    threshold=self.rad_num,
+                    channel_index=self.channel_index,
+                    min_stamp_size=100,
+                    max_stamp_size=1000000,
+                    color_tolerance=30,
+                    edge_threshold=0.1
+                )
+                return remover.remove_stamp(pil_image)
+            else:
+                # 使用简单算法（向后兼容）
+                logger.info("使用简单印章检测算法")
+                return self._remove_stamp_simple(pil_image)
+                
+        except Exception as e:
+            logger.error(f"印章去除失败: {e}，回退到简单算法")
+            return self._remove_stamp_simple(pil_image)
+    
+    def _remove_stamp_simple(self, pil_image: Image.Image) -> Image.Image:
+        """
+        简单的印章去除算法（向后兼容）
+        """
+        np_im = np.array(pil_image)
+        
         if len(np_im.shape) == 3:  # 彩色图（RGB 或 RGBA）
             channels = np_im.shape[2]
 
@@ -135,4 +172,3 @@ class ImageProcessingThread(QThread):
 
         # 转回PIL图像
         return Image.fromarray(np_im)
-
