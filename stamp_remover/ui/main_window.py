@@ -24,8 +24,14 @@ from PIL.ImageQt import ImageQt
 from ..core import ImageProcessingThread, PdfProcessingThread, ThreadManager, PdfRegenerationThread
 from .ui_main import Ui_MainWindow
 from ..config import PDF_PROCESSING_CONFIG, THREAD_CONFIG
+from ..utils.helpers import validate_image_file, validate_pdf_file, validate_file_for_processing
+from ..utils.logging_config import get_logger
+from ..utils.exceptions import (
+    StampRemoverError, ImageProcessingError, PDFProcessingError, 
+    FileNotFoundError, InvalidFileFormatError, ThreadError
+)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -39,16 +45,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._init_ui()
         self._init_thread_manager()
         self._init_variables()
-        
-        # 设置日志
-        self._setup_logging()
-        
-    def _setup_logging(self):
-        """设置日志"""
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
         
     def _init_ui(self):
         """初始化UI"""
@@ -146,16 +142,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
 
         if file_name:
+            valid, msg = validate_image_file(file_name)
+            if not valid:
+                QMessageBox.warning(self, "文件验证失败", f"无法打开图片文件:\n{msg}")
+                logger.warning(f"图片验证失败: {msg}")
+                return
+            
             logger.info(f"选择的图片: {file_name}")
             self.file_name = file_name
             
-            # 显示图片
             pixmap = QPixmap(self.file_name)
             self.label_3.setPixmap(
                 pixmap.scaled(self.label_3.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
             )
             
-            # 显示图像信息
             self._show_image_info(file_name)
         else:
             logger.info("用户取消了选择图片")
@@ -190,34 +190,40 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.information(self, "提示", "请先选择图片")
             return
 
-        # 获取处理参数
-        channel_index = self.comboBox.currentIndex()
-        threshold = self.spinBox.value() if self.spinBox.value() > 0 else 185
-        is_contrast = self.checkBox.isChecked()
-        is_sharpness = self.checkBox_2.isChecked()
-        
-        # 创建并启动图像处理线程
-        thread = ImageProcessingThread(
-            image_path=self.file_name,
-            rad_num=threshold,
-            channel_index=channel_index,
-            is_contrast=is_contrast,
-            is_sharpness=is_sharpness
-        )
-        
-        # 注册线程
-        self.thread_manager.register_thread("image_processing", thread)
-        
-        # 连接信号
-        thread.finished.connect(self.on_image_processed)
-        thread.progress.connect(self._on_image_progress)
-        thread.error.connect(self._on_image_error)
-        
-        # 启动线程
-        if self.thread_manager.start_thread("image_processing"):
-            logger.info("图像处理线程已启动")
-        else:
-            QMessageBox.critical(self, "错误", "启动图像处理线程失败")
+        try:
+            channel_index = self.comboBox.currentIndex()
+            threshold = self.spinBox.value() if self.spinBox.value() > 0 else 185
+            is_contrast = self.checkBox.isChecked()
+            is_sharpness = self.checkBox_2.isChecked()
+            
+            thread = ImageProcessingThread(
+                image_path=self.file_name,
+                rad_num=threshold,
+                channel_index=channel_index,
+                is_contrast=is_contrast,
+                is_sharpness=is_sharpness
+            )
+            
+            self.thread_manager.register_thread("image_processing", thread)
+            
+            thread.finished.connect(self.on_image_processed)
+            thread.progress.connect(self._on_image_progress)
+            thread.error.connect(self._on_image_error)
+            
+            if self.thread_manager.start_thread("image_processing"):
+                logger.info("图像处理线程已启动")
+            else:
+                raise ThreadError("image_processing", "启动线程失败")
+                
+        except ValueError as e:
+            logger.error(f"参数错误: {e}")
+            QMessageBox.warning(self, "参数错误", f"参数设置无效:\n{str(e)}")
+        except StampRemoverError as e:
+            logger.error(f"处理错误: {e}")
+            QMessageBox.critical(self, "处理错误", f"图像处理失败:\n{str(e)}")
+        except Exception as e:
+            logger.error(f"未知错误: {e}", exc_info=True)
+            QMessageBox.critical(self, "错误", f"发生未知错误:\n{str(e)}")
 
     def _on_image_progress(self, progress: int):
         """图像处理进度回调"""
@@ -308,6 +314,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         
         if input_pdf_path:
+            valid, msg = validate_pdf_file(input_pdf_path)
+            if not valid:
+                QMessageBox.warning(self, "文件验证失败", f"无法打开PDF文件:\n{msg}")
+                logger.warning(f"PDF验证失败: {msg}")
+                return
+            
             logger.info(f"选择的PDF: {input_pdf_path}")
             self._start_pdf_processing(input_pdf_path)
 
