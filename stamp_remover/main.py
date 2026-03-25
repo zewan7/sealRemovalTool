@@ -21,6 +21,10 @@ from .ui.main_window import MainWindow
 
 def setup_logging():
     """设置日志配置"""
+    # 防止重复配置
+    if logging.getLogger().hasHandlers():
+        return
+    
     # 创建logs目录
     logs_dir = project_root / "logs"
     logs_dir.mkdir(exist_ok=True)
@@ -32,7 +36,8 @@ def setup_logging():
         handlers=[
             logging.FileHandler(logs_dir / "stamp_remover.log", encoding='utf-8'),
             logging.StreamHandler(sys.stdout)
-        ]
+        ],
+        force=True
     )
 
 

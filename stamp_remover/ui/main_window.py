@@ -40,15 +40,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._init_thread_manager()
         self._init_variables()
         
-        # 设置日志
-        self._setup_logging()
-        
-    def _setup_logging(self):
-        """设置日志"""
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
+
         
     def _init_ui(self):
         """初始化UI"""
@@ -147,6 +139,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if file_name:
             logger.info(f"选择的图片: {file_name}")
+            
+            # 验证图片文件
+            from ..utils.helpers import validate_image_file
+            is_valid, message = validate_image_file(file_name)
+            if not is_valid:
+                logger.error(f"图片验证失败: {message}")
+                QMessageBox.warning(self, "文件格式错误", f"所选文件不是有效的图片文件:\n{message}")
+                return
+            
             self.file_name = file_name
             
             # 显示图片
@@ -309,6 +310,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         if input_pdf_path:
             logger.info(f"选择的PDF: {input_pdf_path}")
+            
+            # 验证PDF文件
+            from ..utils.helpers import validate_pdf_file
+            is_valid, message = validate_pdf_file(input_pdf_path)
+            if not is_valid:
+                logger.error(f"PDF验证失败: {message}")
+                QMessageBox.warning(self, "文件格式错误", f"所选文件不是有效的PDF文件:\n{message}")
+                return
+            
             self._start_pdf_processing(input_pdf_path)
 
     def _start_pdf_processing(self, pdf_path: str):
@@ -346,8 +356,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pdf_processing_thread.status.connect(self._on_pdf_status)
         self.pdf_processing_thread.error.connect(self._on_pdf_error)
         
-        # 启动线程
-        self.pdf_processing_thread.start()
+        # 使用线程管理器管理线程
+        self.thread_manager.register_thread("pdf_processing", self.pdf_processing_thread)
+        if not self.thread_manager.start_thread("pdf_processing"):
+            logger.error("启动PDF处理线程失败")
+            QMessageBox.critical(self, "错误", "启动PDF处理线程失败")
 
     def _on_pdf_progress(self, current: int, total: int):
         """PDF处理进度回调"""
@@ -576,8 +589,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.pdf_regeneration_thread.progress.connect(self._on_pdf_regeneration_progress)
             self.pdf_regeneration_thread.error.connect(self._on_pdf_regeneration_error)
             
-            # 启动线程
-            self.pdf_regeneration_thread.start()
+            # 使用线程管理器管理线程
+            self.thread_manager.register_thread("pdf_regeneration", self.pdf_regeneration_thread)
+            if not self.thread_manager.start_thread("pdf_regeneration"):
+                logger.error("启动PDF重新生成线程失败")
+                QMessageBox.critical(self, "错误", "启动PDF重新生成线程失败")
             
             logger.info(f"开始重新生成PDF: {save_path}")
             logger.info(f"参数: 阈值={threshold}, 通道={channel_index}, 对比度={enable_contrast}, 清晰度={enable_sharpness}, 线程数={max_workers}")
