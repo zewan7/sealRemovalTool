@@ -6,7 +6,6 @@
 
 import sys
 import os
-import logging
 from pathlib import Path
 
 # 添加项目根目录到Python路径
@@ -16,32 +15,17 @@ sys.path.insert(0, str(project_root))
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
 
-from .ui.main_window import MainWindow
-
-
-def setup_logging():
-    """设置日志配置"""
-    # 创建logs目录
-    logs_dir = project_root / "logs"
-    logs_dir.mkdir(exist_ok=True)
-    
-    # 配置日志
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(logs_dir / "stamp_remover.log", encoding='utf-8'),
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
+# 导入统一的日志配置
+from .utils.logger import setup_logging, get_logger
 
 
 def main():
     """主函数"""
-    # 设置日志
+    # 设置统一的日志配置（确保只配置一次）
     setup_logging()
     
-    logger = logging.getLogger(__name__)
+    # 获取日志记录器
+    logger = get_logger(__name__)
     logger.info("启动印章去除工具")
     
     try:
@@ -54,6 +38,9 @@ def main():
         # 设置应用属性
         app.setAttribute(Qt.AA_EnableHighDpiScaling, True)
         app.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+        
+        # 导入主窗口
+        from .ui.main_window import MainWindow
         
         # 创建主窗口
         window = MainWindow()
@@ -74,4 +61,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-

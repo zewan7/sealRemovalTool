@@ -10,6 +10,13 @@ __author__ = "Your Name"
 __email__ = "your.email@example.com"
 __description__ = "印章去除工具 - 智能去除图片和PDF中的印章"
 
+# 导入统一的日志配置（确保在使用任何模块前配置好日志）
+from .utils.logger import setup_logging, get_logger
+
+# 初始化日志配置
+setup_logging()
+
+# 导入核心模块
 from .core import ImageProcessingThread, PdfProcessingThread, ThreadManager
 from .ui import MainWindow
 
@@ -22,5 +29,6 @@ __all__ = [
     "PdfProcessingThread", 
     "ThreadManager",
     "MainWindow",
+    "setup_logging",
+    "get_logger",
 ]
-

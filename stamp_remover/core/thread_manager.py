@@ -4,11 +4,12 @@
 线程管理模块
 """
 
-import logging
 from typing import Optional, Dict, Any
 from PySide6.QtCore import QThread, QObject
 
-logger = logging.getLogger(__name__)
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ThreadManager(QObject):

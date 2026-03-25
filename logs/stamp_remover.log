@@ -1,0 +1,175 @@
+2026-03-25 15:18:48,584 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:18:50,554 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:18:50,557 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:18:50,557 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:18:50,575 - stamp_remover.core.pdf_processor - INFO - 开始PDF重新生成，共 10 页
+2026-03-25 15:18:51,439 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,440 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,440 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,441 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,441 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,441 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,441 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,441 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,444 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,444 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,445 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,446 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,446 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,446 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,446 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,446 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,447 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,447 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,447 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,447 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A0F4D8A0>
+2026-03-25 15:18:51,447 - stamp_remover.core.pdf_processor - ERROR - PDF重新生成失败: 没有成功处理任何图像
+2026-03-25 15:18:51,498 - stamp_remover.core.pdf_processor - INFO - 开始PDF重新生成，共 10 页
+2026-03-25 15:18:51,499 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x0000021099FE3B50>
+2026-03-25 15:18:51,500 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x0000021097886E80>
+2026-03-25 15:18:51,500 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155DB20>
+2026-03-25 15:18:51,501 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155DAD0>
+2026-03-25 15:18:51,502 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155ED90>
+2026-03-25 15:18:51,502 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155F920>
+2026-03-25 15:18:51,502 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x0000021099FE3B50>
+2026-03-25 15:18:51,502 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155F9C0>
+2026-03-25 15:18:51,501 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155ED40>
+2026-03-25 15:18:51,503 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155FA60>
+2026-03-25 15:18:51,503 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155FB00>
+2026-03-25 15:18:51,503 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x0000021097886E80>
+2026-03-25 15:18:51,504 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155DAD0>
+2026-03-25 15:18:51,504 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155DB20>
+2026-03-25 15:18:51,504 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155ED90>
+2026-03-25 15:18:51,505 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155F920>
+2026-03-25 15:18:51,505 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155F9C0>
+2026-03-25 15:18:51,505 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155ED40>
+2026-03-25 15:18:51,505 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155FA60>
+2026-03-25 15:18:51,505 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155FB00>
+2026-03-25 15:18:51,506 - stamp_remover.core.pdf_processor - ERROR - PDF重新生成失败: 没有成功处理任何图像
+2026-03-25 15:18:51,563 - stamp_remover.core.pdf_processor - INFO - 开始PDF重新生成，共 10 页
+2026-03-25 15:18:51,564 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x0000021099FE3DD0>
+2026-03-25 15:18:51,565 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x0000021099FE3D30>
+2026-03-25 15:18:51,565 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x0000021099FE3DD0>
+2026-03-25 15:18:51,565 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155E9D0>
+2026-03-25 15:18:51,566 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155EA20>
+2026-03-25 15:18:51,566 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x0000021099FE3D30>
+2026-03-25 15:18:51,566 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155D490>
+2026-03-25 15:18:51,567 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155D9E0>
+2026-03-25 15:18:51,567 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155E9D0>
+2026-03-25 15:18:51,567 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155E700>
+2026-03-25 15:18:51,568 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155DB70>
+2026-03-25 15:18:51,568 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155EA20>
+2026-03-25 15:18:51,568 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155E750>
+2026-03-25 15:18:51,569 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155E7F0>
+2026-03-25 15:18:51,569 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155D490>
+2026-03-25 15:18:51,569 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155D9E0>
+2026-03-25 15:18:51,569 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155E700>
+2026-03-25 15:18:51,570 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155DB70>
+2026-03-25 15:18:51,570 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155E750>
+2026-03-25 15:18:51,570 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000210A155E7F0>
+2026-03-25 15:18:51,570 - stamp_remover.core.pdf_processor - ERROR - PDF重新生成失败: 没有成功处理任何图像
+2026-03-25 15:20:37,603 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:20:39,055 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:20:39,061 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:20:39,064 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:20:39,070 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:20:39,074 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:20:39,512 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:20:39,512 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:20:39,521 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:20:39,525 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:20:39,530 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:20:39,573 - stamp_remover.core.stamp_detector - WARNING - 非彩色图像，跳过印章检测
+2026-03-25 15:22:42,370 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:22:43,521 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:22:43,524 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:22:43,532 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:22:43,534 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:22:43,537 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:22:43,695 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:22:43,696 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:22:43,705 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:22:43,708 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:22:43,714 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:22:43,921 - stamp_remover.core.stamp_detector - WARNING - 非彩色图像，跳过印章检测
+2026-03-25 15:23:17,001 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:23:18,554 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:23:18,557 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:23:18,558 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:23:18,578 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:23:18,582 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:23:18,586 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:23:18,589 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:23:18,595 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:23:18,769 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:23:18,769 - stamp_remover.core.thread_manager - INFO - 清理所有线程完成
+2026-03-25 15:23:18,780 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:23:18,784 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:23:18,788 - stamp_remover - INFO - 日志系统已初始化
+2026-03-25 15:23:18,800 - stamp_remover.core.stamp_detector - WARNING - 非彩色图像，跳过印章检测
+2026-03-25 15:23:18,855 - stamp_remover.core.pdf_processor - INFO - 开始PDF重新生成，共 10 页
+2026-03-25 15:23:19,033 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,033 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,034 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,034 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,034 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,034 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,035 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,035 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,035 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,035 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,036 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,036 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,036 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,036 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,037 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,037 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,037 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,037 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,038 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,038 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDB23470>
+2026-03-25 15:23:19,038 - stamp_remover.core.pdf_processor - ERROR - PDF重新生成失败: 没有成功处理任何图像
+2026-03-25 15:23:19,100 - stamp_remover.core.pdf_processor - INFO - 开始PDF重新生成，共 10 页
+2026-03-25 15:23:19,102 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C400>
+2026-03-25 15:23:19,102 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F4207B50>
+2026-03-25 15:23:19,103 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDE8E0>
+2026-03-25 15:23:19,104 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDED90>
+2026-03-25 15:23:19,105 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDF830>
+2026-03-25 15:23:19,106 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FE008400>
+2026-03-25 15:23:19,105 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C400>
+2026-03-25 15:23:19,106 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FE0084A0>
+2026-03-25 15:23:19,104 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDF7E0>
+2026-03-25 15:23:19,106 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FE008540>
+2026-03-25 15:23:19,107 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FE0085E0>
+2026-03-25 15:23:19,107 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F4207B50>
+2026-03-25 15:23:19,108 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDE8E0>
+2026-03-25 15:23:19,108 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDED90>
+2026-03-25 15:23:19,109 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDF830>
+2026-03-25 15:23:19,109 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FE008400>
+2026-03-25 15:23:19,111 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FE0084A0>
+2026-03-25 15:23:19,111 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDF7E0>
+2026-03-25 15:23:19,111 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FE008540>
+2026-03-25 15:23:19,111 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FE0085E0>
+2026-03-25 15:23:19,112 - stamp_remover.core.pdf_processor - ERROR - PDF重新生成失败: 没有成功处理任何图像
+2026-03-25 15:23:19,167 - stamp_remover.core.pdf_processor - INFO - 开始PDF重新生成，共 10 页
+2026-03-25 15:23:19,169 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDF600>
+2026-03-25 15:23:19,169 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDFBF0>
+2026-03-25 15:23:19,169 - stamp_remover.core.pdf_processor - ERROR - 处理第 1 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDF600>
+2026-03-25 15:23:19,170 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C310>
+2026-03-25 15:23:19,170 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C540>
+2026-03-25 15:23:19,170 - stamp_remover.core.pdf_processor - ERROR - 处理第 2 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFDFBF0>
+2026-03-25 15:23:19,171 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C040>
+2026-03-25 15:23:19,171 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C4F0>
+2026-03-25 15:23:19,171 - stamp_remover.core.pdf_processor - ERROR - 处理第 3 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C310>
+2026-03-25 15:23:19,172 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C220>
+2026-03-25 15:23:19,172 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFFC040>
+2026-03-25 15:23:19,172 - stamp_remover.core.pdf_processor - ERROR - 处理第 4 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C540>
+2026-03-25 15:23:19,173 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFFC090>
+2026-03-25 15:23:19,173 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFFC0E0>
+2026-03-25 15:23:19,173 - stamp_remover.core.pdf_processor - ERROR - 处理第 5 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C040>
+2026-03-25 15:23:19,174 - stamp_remover.core.pdf_processor - ERROR - 处理第 6 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C4F0>
+2026-03-25 15:23:19,174 - stamp_remover.core.pdf_processor - ERROR - 处理第 7 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224F699C220>
+2026-03-25 15:23:19,174 - stamp_remover.core.pdf_processor - ERROR - 处理第 8 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFFC040>
+2026-03-25 15:23:19,174 - stamp_remover.core.pdf_processor - ERROR - 处理第 9 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFFC090>
+2026-03-25 15:23:19,174 - stamp_remover.core.pdf_processor - ERROR - 处理第 10 页时出错: cannot identify image file <_io.BytesIO object at 0x00000224FDFFC0E0>
+2026-03-25 15:23:19,175 - stamp_remover.core.pdf_processor - ERROR - PDF重新生成失败: 没有成功处理任何图像

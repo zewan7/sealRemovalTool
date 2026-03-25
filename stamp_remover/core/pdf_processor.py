@@ -8,19 +8,22 @@ from PySide6.QtCore import QThread, Signal
 import fitz  # PyMuPDF
 import tempfile
 import os
-import logging
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Generator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import io
 from PIL import Image
 import time
 import concurrent.futures
+import gc
 
-logger = logging.getLogger(__name__)
+from .stamp_detector import AdvancedStampRemover
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class PdfProcessingThread(QThread):
-    """PDF处理线程"""
+    """PDF处理线程 - 使用流式处理避免内存溢出"""
     
     # 信号定义
     finished = Signal(list)           # 处理完成，传递图片数据列表
@@ -29,13 +32,15 @@ class PdfProcessingThread(QThread):
     status = Signal(str)              # 状态信息
 
     def __init__(self, pdf_path: str, dpi: int = 150, max_pages: Optional[int] = None, 
-                 max_workers: int = 4):
+                 max_workers: int = 4, memory_limit_mb: float = 500.0):
         super().__init__()
         self.pdf_path = pdf_path
         self.dpi = dpi
         self.max_pages = max_pages
         self.max_workers = max_workers
-        self.temp_dir = None
+        self.memory_limit_mb = memory_limit_mb
+        self._doc: Optional[fitz.Document] = None
+        self._is_cancelled = False
         
         # 验证参数
         self._validate_parameters()
@@ -48,6 +53,16 @@ class PdfProcessingThread(QThread):
         if not os.path.exists(self.pdf_path):
             raise ValueError(f"PDF文件不存在: {self.pdf_path}")
         
+        # 严格的文件扩展名检查
+        _, ext = os.path.splitext(self.pdf_path.lower())
+        if ext != '.pdf':
+            raise ValueError(f"不支持的文件格式: {ext}，仅支持.pdf格式")
+        
+        # 验证文件大小
+        file_size_mb = os.path.getsize(self.pdf_path) / (1024 * 1024)
+        if file_size_mb > 1024:  # 1GB限制
+            logger.warning(f"PDF文件较大: {file_size_mb:.1f}MB，处理可能需要较长时间")
+        
         if not (50 <= self.dpi <= 600):
             raise ValueError("DPI必须在50-600范围内")
         
@@ -57,14 +72,18 @@ class PdfProcessingThread(QThread):
         if self.max_workers <= 0:
             raise ValueError("工作线程数必须大于0")
 
-    def _process_single_page(self, args: Tuple[int, fitz.Page]) -> Tuple[int, bytes]:
+    def _process_single_page(self, page_num: int) -> Tuple[int, bytes]:
         """处理单个页面（用于多线程）"""
-        page_num, page = args
+        doc = None
         try:
+            # 在线程中打开文档的副本
+            doc = fitz.open(self.pdf_path)
+            page = doc.load_page(page_num)
+            
             # 转换为图片
             pix = page.get_pixmap(dpi=self.dpi)
             
-            # 将图片数据转换为字节流，而不是保存到文件
+            # 将图片数据转换为字节流
             img_data = pix.tobytes("png")
             
             logger.info(f"第 {page_num + 1} 页处理完成")
@@ -73,12 +92,19 @@ class PdfProcessingThread(QThread):
         except Exception as e:
             logger.error(f"处理第 {page_num + 1} 页时出错: {e}")
             raise e
+        finally:
+            # 确保资源被释放
+            if doc is not None:
+                try:
+                    doc.close()
+                except:
+                    pass
 
     def run(self):
-        """执行PDF处理"""
+        """执行PDF处理 - 流式处理避免内存溢出"""
+        doc = None
         try:
             logger.info(f"开始处理PDF: {self.pdf_path}")
-            # 只发送一次开始状态
             self.status.emit("正在处理PDF...")
             
             # 打开PDF文档
@@ -93,24 +119,16 @@ class PdfProcessingThread(QThread):
             # 发送初始进度
             self.progress.emit(0, total_pages)
             
-            # 准备页面数据
-            pages_data = []
-            for i in range(total_pages):
-                page = doc.load_page(i)
-                pages_data.append((i, page))
+            # 检查是否需要流式处理（大文件）
+            file_size_mb = os.path.getsize(self.pdf_path) / (1024 * 1024)
+            use_streaming = file_size_mb > self.memory_limit_mb or total_pages > 50
             
-            output_images = []
-            processed_count = 0
-            
-            if self.max_workers > 1:
-                # 多线程模式：使用改进的进度跟踪
-                self._process_multithreaded(pages_data, total_pages, output_images)
+            if use_streaming:
+                logger.info(f"使用流式处理模式（文件大小: {file_size_mb:.1f}MB）")
+                output_images = self._process_streaming(total_pages)
             else:
-                # 单线程模式：顺序处理，进度准确
-                self._process_singlethreaded(pages_data, total_pages, output_images)
-            
-            # 关闭文档
-            doc.close()
+                logger.info("使用内存处理模式")
+                output_images = self._process_in_memory(total_pages)
             
             # 按页面顺序排序结果
             output_images.sort(key=lambda x: x[0])
@@ -136,97 +154,118 @@ class PdfProcessingThread(QThread):
             self.finished.emit([])
             
         finally:
-            # 清理资源
-            if hasattr(self, 'doc') and self.doc:
+            # 确保资源被释放
+            if doc is not None:
                 try:
-                    self.doc.close()
-                except:
-                    pass
-
-    def _process_singlethreaded(self, pages_data, total_pages, output_images):
-        """单线程处理，进度准确"""
-        for i, (page_num, page) in enumerate(pages_data):
-            try:
-                page_num, img_data = self._process_single_page((page_num, page))
-                output_images.append((page_num, img_data))
-                
-                # 发送准确进度
-                self.progress.emit(i + 1, total_pages)
-                logger.info(f"第 {page_num + 1} 页处理完成，进度: {i + 1}/{total_pages}")
-                
-            except Exception as e:
-                logger.error(f"处理第 {page_num + 1} 页时出错: {e}")
-                continue
-
-    def _process_multithreaded(self, pages_data, total_pages, output_images):
-        """多线程处理，使用改进的进度跟踪"""
-        # 创建任务队列
-        task_queue = pages_data.copy()
-        completed_tasks = []
-        active_tasks = {}
-        
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            # 初始提交任务
-            for _ in range(min(self.max_workers, len(task_queue))):
-                if task_queue:
-                    page_data = task_queue.pop(0)
-                    future = executor.submit(self._process_single_page, page_data)
-                    active_tasks[future] = page_data
+                    doc.close()
+                    logger.info("PDF文档已关闭")
+                except Exception as e:
+                    logger.error(f"关闭PDF文档失败: {e}")
             
-            # 处理完成的任务并提交新任务
-            while active_tasks:
-                # 等待任意一个任务完成
-                done, _ = concurrent.futures.wait(
-                    active_tasks.keys(), 
-                    return_when=concurrent.futures.FIRST_COMPLETED
-                )
+            # 强制垃圾回收
+            gc.collect()
+
+    def _process_in_memory(self, total_pages: int) -> List[Tuple[int, bytes]]:
+        """内存处理模式 - 适用于小文件"""
+        output_images = []
+        
+        if self.max_workers > 1:
+            # 多线程模式
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                # 提交所有任务
+                future_to_page = {
+                    executor.submit(self._process_single_page, i): i 
+                    for i in range(total_pages)
+                }
                 
-                for future in done:
+                # 收集结果
+                for future in concurrent.futures.as_completed(future_to_page):
+                    if self._is_cancelled:
+                        executor.shutdown(wait=False)
+                        break
+                    
+                    page_num = future_to_page[future]
                     try:
                         page_num, img_data = future.result()
-                        completed_tasks.append((page_num, img_data))
-                        
-                        # 从活动任务中移除
-                        del active_tasks[future]
-                        
-                        # 发送进度（基于完成的任务数量）
-                        progress = len(completed_tasks)
-                        self.progress.emit(progress, total_pages)
-                        
-                        logger.info(f"第 {page_num + 1} 页处理完成，总进度: {progress}/{total_pages}")
-                        
+                        output_images.append((page_num, img_data))
+                        self.progress.emit(len(output_images), total_pages)
                     except Exception as e:
-                        page_data = active_tasks[future]
-                        page_num = page_data[0]
                         logger.error(f"处理第 {page_num + 1} 页时出错: {e}")
-                        del active_tasks[future]
-                    
-                    # 提交新任务
-                    if task_queue:
-                        new_page_data = task_queue.pop(0)
-                        new_future = executor.submit(self._process_single_page, new_page_data)
-                        active_tasks[new_future] = new_page_data
+        else:
+            # 单线程模式
+            for i in range(total_pages):
+                if self._is_cancelled:
+                    break
+                try:
+                    page_num, img_data = self._process_single_page(i)
+                    output_images.append((page_num, img_data))
+                    self.progress.emit(i + 1, total_pages)
+                except Exception as e:
+                    logger.error(f"处理第 {i + 1} 页时出错: {e}")
         
-        # 将完成的任务添加到输出列表
-        output_images.extend(completed_tasks)
+        return output_images
+
+    def _process_streaming(self, total_pages: int) -> List[Tuple[int, bytes]]:
+        """流式处理模式 - 适用于大文件，分批处理"""
+        output_images = []
+        batch_size = 10  # 每批处理10页
+        
+        for batch_start in range(0, total_pages, batch_size):
+            if self._is_cancelled:
+                break
+            
+            batch_end = min(batch_start + batch_size, total_pages)
+            logger.info(f"处理批次: {batch_start + 1} - {batch_end}")
+            
+            batch_images = []
+            
+            if self.max_workers > 1:
+                # 多线程处理批次
+                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                    future_to_page = {
+                        executor.submit(self._process_single_page, i): i 
+                        for i in range(batch_start, batch_end)
+                    }
+                    
+                    for future in concurrent.futures.as_completed(future_to_page):
+                        page_num = future_to_page[future]
+                        try:
+                            page_num, img_data = future.result()
+                            batch_images.append((page_num, img_data))
+                        except Exception as e:
+                            logger.error(f"处理第 {page_num + 1} 页时出错: {e}")
+            else:
+                # 单线程处理批次
+                for i in range(batch_start, batch_end):
+                    try:
+                        page_num, img_data = self._process_single_page(i)
+                        batch_images.append((page_num, img_data))
+                    except Exception as e:
+                        logger.error(f"处理第 {i + 1} 页时出错: {e}")
+            
+            # 添加到总结果
+            output_images.extend(batch_images)
+            self.progress.emit(len(output_images), total_pages)
+            
+            # 每批处理后强制垃圾回收
+            gc.collect()
+            logger.info(f"批次 {batch_start + 1} - {batch_end} 完成，已处理 {len(output_images)}/{total_pages} 页")
+        
+        return output_images
+
+    def cancel(self):
+        """取消处理"""
+        self._is_cancelled = True
+        logger.info("PDF处理已取消")
 
     def cleanup(self):
-        """清理临时文件（现在主要用于清理其他可能的临时资源）"""
-        if self.temp_dir and os.path.exists(self.temp_dir):
-            try:
-                import shutil
-                shutil.rmtree(self.temp_dir)
-                logger.info(f"清理临时目录: {self.temp_dir}")
-            except Exception as e:
-                logger.error(f"清理临时目录失败: {e}")
-
-    def __del__(self):
-        """析构函数，确保清理临时文件"""
-        self.cleanup()
+        """清理资源"""
+        self.cancel()
+        gc.collect()
 
 
 class PdfRegenerationThread(QThread):
-    """PDF重新生成线程 - 多线程印章去除 + PDF组合"""
+    """PDF重新生成线程 - 多线程印章去除 + PDF组合，支持流式处理"""
     
     # 信号定义
     finished = Signal(bool, str)      # 处理完成，成功标志和保存路径
@@ -236,7 +275,7 @@ class PdfRegenerationThread(QThread):
     def __init__(self, pdf_images_data: List[bytes], save_path: str, 
                  threshold: int = 185, channel_index: int = 0,
                  enable_contrast: bool = False, enable_sharpness: bool = False,
-                 max_workers: int = 4):
+                 max_workers: int = 4, use_streaming: bool = False):
         super().__init__()
         self.pdf_images_data = pdf_images_data
         self.save_path = save_path
@@ -245,6 +284,8 @@ class PdfRegenerationThread(QThread):
         self.enable_contrast = enable_contrast
         self.enable_sharpness = enable_sharpness
         self.max_workers = max_workers
+        self.use_streaming = use_streaming
+        self._is_cancelled = False
         
         # 验证参数
         self._validate_parameters()
@@ -256,6 +297,12 @@ class PdfRegenerationThread(QThread):
         
         if not self.save_path:
             raise ValueError("保存路径不能为空")
+        
+        # 严格的文件扩展名检查
+        _, ext = os.path.splitext(self.save_path.lower())
+        if ext != '.pdf':
+            logger.warning(f"保存路径扩展名不正确: {ext}，将自动添加.pdf")
+            self.save_path = self.save_path + '.pdf'
         
         if not (0 <= self.threshold <= 255):
             raise ValueError("阈值必须在0-255范围内")
@@ -269,6 +316,9 @@ class PdfRegenerationThread(QThread):
     def _process_single_image(self, args: Tuple[int, bytes]) -> Tuple[int, Image.Image]:
         """处理单个图像（用于多线程）"""
         page_num, img_data = args
+        pil_img = None
+        result_image = None
+        
         try:
             # 从字节数据创建PIL图像
             pil_img = Image.open(io.BytesIO(img_data))
@@ -282,34 +332,17 @@ class PdfRegenerationThread(QThread):
                 from PIL import ImageEnhance
                 pil_img = ImageEnhance.Sharpness(pil_img).enhance(2.0)
             
-            # 转换为NumPy数组进行印章去除
-            import numpy as np
-            np_img = np.array(pil_img)
-            
-            # 印章去除处理
-            if len(np_img.shape) == 3:  # 彩色图
-                channels = np_img.shape[2]
-                
-                # 确保通道索引有效
-                if self.channel_index >= channels:
-                    self.channel_index = 0
-                
-                # 创建掩码
-                mask = np_img[:, :, self.channel_index] >= self.threshold
-                
-                # 根据通道数创建白色像素
-                if channels == 3:
-                    white = [255, 255, 255]
-                elif channels == 4:
-                    white = [255, 255, 255, 255]
-                else:
-                    white = [255] * channels
-                
-                # 应用掩码，将印章区域替换为白色
-                np_img[mask] = white
-            
-            # 转回PIL图像
-            result_image = Image.fromarray(np_img)
+            # 使用高级印章去除算法
+            remover = AdvancedStampRemover(
+                method='auto',
+                threshold=self.threshold,
+                channel_index=self.channel_index,
+                min_stamp_size=100,
+                max_stamp_size=1000000,
+                color_tolerance=30,
+                edge_threshold=0.1
+            )
+            result_image = remover.remove_stamp(pil_img)
             
             logger.info(f"第 {page_num + 1} 页印章去除完成")
             return page_num, result_image
@@ -317,6 +350,10 @@ class PdfRegenerationThread(QThread):
         except Exception as e:
             logger.error(f"处理第 {page_num + 1} 页时出错: {e}")
             raise e
+        finally:
+            # 清理资源
+            if pil_img is not None:
+                pil_img.close()
 
     def run(self):
         """执行PDF重新生成"""
@@ -331,16 +368,23 @@ class PdfRegenerationThread(QThread):
             images_data = [(i, img_data) for i, img_data in enumerate(self.pdf_images_data)]
             processed_images = []
             
-            if self.max_workers > 1:
-                # 多线程模式：使用改进的进度跟踪
-                self._process_images_multithreaded(images_data, total_pages, processed_images)
+            if self.use_streaming and total_pages > 20:
+                # 流式处理模式
+                logger.info("使用流式处理模式")
+                self._process_streaming(images_data, total_pages, processed_images)
             else:
-                # 单线程模式：顺序处理
-                self._process_images_singlethreaded(images_data, total_pages, processed_images)
+                # 内存处理模式
+                if self.max_workers > 1:
+                    self._process_images_multithreaded(images_data, total_pages, processed_images)
+                else:
+                    self._process_images_singlethreaded(images_data, total_pages, processed_images)
             
             # 按页面顺序排序结果
             processed_images.sort(key=lambda x: x[0])
             final_images = [img for _, img in processed_images]
+            
+            if not final_images:
+                raise ValueError("没有成功处理任何图像")
             
             # 组合成PDF
             logger.info("开始组合PDF文件...")
@@ -354,10 +398,15 @@ class PdfRegenerationThread(QThread):
             logger.error(f"PDF重新生成失败: {e}")
             self.error.emit(str(e))
             self.finished.emit(False, self.save_path)
+        finally:
+            # 强制垃圾回收
+            gc.collect()
 
     def _process_images_singlethreaded(self, images_data, total_pages, processed_images):
         """单线程处理图像"""
         for i, (page_num, img_data) in enumerate(images_data):
+            if self._is_cancelled:
+                break
             try:
                 page_num, result_img = self._process_single_image((page_num, img_data))
                 processed_images.append((page_num, result_img))
@@ -372,55 +421,73 @@ class PdfRegenerationThread(QThread):
 
     def _process_images_multithreaded(self, images_data, total_pages, processed_images):
         """多线程处理图像"""
-        # 创建任务队列
-        task_queue = images_data.copy()
-        completed_tasks = []
-        active_tasks = {}
-        
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            # 初始提交任务
-            for _ in range(min(self.max_workers, len(task_queue))):
-                if task_queue:
-                    img_data = task_queue.pop(0)
-                    future = executor.submit(self._process_single_image, img_data)
-                    active_tasks[future] = img_data
+            # 提交所有任务
+            future_to_page = {
+                executor.submit(self._process_single_image, img_data): img_data[0] 
+                for img_data in images_data
+            }
             
-            # 处理完成的任务并提交新任务
-            while active_tasks:
-                # 等待任意一个任务完成
-                done, _ = concurrent.futures.wait(
-                    active_tasks.keys(), 
-                    return_when=concurrent.futures.FIRST_COMPLETED
-                )
+            # 收集结果
+            for future in concurrent.futures.as_completed(future_to_page):
+                if self._is_cancelled:
+                    executor.shutdown(wait=False)
+                    break
                 
-                for future in done:
-                    try:
-                        page_num, result_img = future.result()
-                        completed_tasks.append((page_num, result_img))
-                        
-                        # 从活动任务中移除
-                        del active_tasks[future]
-                        
-                        # 发送进度（基于完成的任务数量）
-                        progress = len(completed_tasks)
-                        self.progress.emit(progress, total_pages)
-                        
-                        logger.info(f"第 {page_num + 1} 页处理完成，总进度: {progress}/{total_pages}")
-                        
-                    except Exception as e:
-                        img_data = active_tasks[future]
-                        page_num = img_data[0]
-                        logger.error(f"处理第 {page_num + 1} 页时出错: {e}")
-                        del active_tasks[future]
+                page_num = future_to_page[future]
+                try:
+                    page_num, result_img = future.result()
+                    processed_images.append((page_num, result_img))
                     
-                    # 提交新任务
-                    if task_queue:
-                        new_img_data = task_queue.pop(0)
-                        new_future = executor.submit(self._process_single_image, new_img_data)
-                        active_tasks[new_future] = new_img_data
+                    # 发送进度
+                    self.progress.emit(len(processed_images), total_pages)
+                    logger.info(f"第 {page_num + 1} 页处理完成，总进度: {len(processed_images)}/{total_pages}")
+                    
+                except Exception as e:
+                    logger.error(f"处理第 {page_num + 1} 页时出错: {e}")
+
+    def _process_streaming(self, images_data, total_pages, processed_images):
+        """流式处理图像 - 分批处理避免内存溢出"""
+        batch_size = 5  # 每批处理5页
         
-        # 将完成的任务添加到输出列表
-        processed_images.extend(completed_tasks)
+        for batch_start in range(0, total_pages, batch_size):
+            if self._is_cancelled:
+                break
+            
+            batch_end = min(batch_start + batch_size, total_pages)
+            batch_data = images_data[batch_start:batch_end]
+            
+            logger.info(f"处理批次: {batch_start + 1} - {batch_end}")
+            
+            batch_images = []
+            
+            if self.max_workers > 1:
+                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                    future_to_page = {
+                        executor.submit(self._process_single_image, img_data): img_data[0] 
+                        for img_data in batch_data
+                    }
+                    
+                    for future in concurrent.futures.as_completed(future_to_page):
+                        page_num = future_to_page[future]
+                        try:
+                            page_num, result_img = future.result()
+                            batch_images.append((page_num, result_img))
+                        except Exception as e:
+                            logger.error(f"处理第 {page_num + 1} 页时出错: {e}")
+            else:
+                for img_data in batch_data:
+                    try:
+                        page_num, result_img = self._process_single_image(img_data)
+                        batch_images.append((page_num, result_img))
+                    except Exception as e:
+                        logger.error(f"处理第 {img_data[0] + 1} 页时出错: {e}")
+            
+            processed_images.extend(batch_images)
+            self.progress.emit(len(processed_images), total_pages)
+            
+            # 每批处理后强制垃圾回收
+            gc.collect()
 
     def _combine_images_to_pdf(self, images):
         """将图像组合成PDF文件"""
@@ -454,10 +521,15 @@ class PdfRegenerationThread(QThread):
             logger.error(f"PDF组合失败: {e}")
             raise e
 
+    def cancel(self):
+        """取消处理"""
+        self._is_cancelled = True
+        logger.info("PDF重新生成已取消")
+
     def cleanup(self):
         """清理资源"""
-        # 这里可以添加清理逻辑
-        pass
+        self.cancel()
+        gc.collect()
 
 
 class PdfPageData:
@@ -497,4 +569,9 @@ class PdfPageData:
     def __len__(self) -> int:
         """返回图像数据的字节数"""
         return len(self.image_data)
-
+    
+    def cleanup(self):
+        """清理资源"""
+        if self._pil_image is not None:
+            self._pil_image.close()
+            self._pil_image = None
