@@ -31,27 +31,51 @@ def validate_image_file(file_path: str) -> Tuple[bool, str]:
     if not os.path.isfile(file_path):
         return False, "不是有效的文件"
     
-    # 检查文件扩展名
-    _, ext = os.path.splitext(file_path.lower())
+    # 检查文件大小
+    file_size = os.path.getsize(file_path)
+    if file_size == 0:
+        return False, "文件为空"
+    
+    # 严格检查文件扩展名（包括大小写变体）
+    file_path_lower = file_path.lower()
     image_formats, _ = get_supported_formats()
     
-    if ext not in image_formats:
+    # 检查是否有支持的扩展名
+    has_valid_ext = False
+    for ext in image_formats:
+        if file_path_lower.endswith(ext):
+            has_valid_ext = True
+            break
+    
+    if not has_valid_ext:
+        _, ext = os.path.splitext(file_path)
         return False, f"不支持的图片格式: {ext}"
     
-    # 尝试打开图片验证格式
+    # 尝试打开图片验证格式（更严格的内容验证）
     try:
         with Image.open(file_path) as img:
             # 验证图片模式
-            if img.mode not in ['RGB', 'RGBA', 'L']:
+            if img.mode not in ['RGB', 'RGBA', 'L', 'P']:
                 return False, f"不支持的图片模式: {img.mode}"
             
             # 验证图片尺寸
             if img.size[0] <= 0 or img.size[1] <= 0:
                 return False, "图片尺寸无效"
             
+            # 验证图片尺寸限制（防止超大图片）
+            max_dimension = 20000  # 最大20000像素
+            if img.size[0] > max_dimension or img.size[1] > max_dimension:
+                return False, f"图片尺寸过大: {img.size}（最大支持{max_dimension}像素）"
+            
+            # 尝试验证图片完整性
+            try:
+                img.verify()
+            except Exception:
+                return False, "图片文件损坏或不完整"
+            
             return True, "验证通过"
     except Exception as e:
-        return False, f"图片文件损坏: {str(e)}"
+        return False, f"图片文件验证失败: {str(e)}"
 
 
 def validate_pdf_file(file_path: str) -> Tuple[bool, str]:
@@ -62,25 +86,56 @@ def validate_pdf_file(file_path: str) -> Tuple[bool, str]:
     if not os.path.isfile(file_path):
         return False, "不是有效的文件"
     
-    # 检查文件扩展名
-    _, ext = os.path.splitext(file_path.lower())
+    # 检查文件大小
+    file_size = os.path.getsize(file_path)
+    if file_size == 0:
+        return False, "文件为空"
+    
+    # 严格检查文件扩展名（包括大小写变体）
+    file_path_lower = file_path.lower()
     _, pdf_formats = get_supported_formats()
     
-    if ext not in pdf_formats:
+    has_valid_ext = False
+    for ext in pdf_formats:
+        if file_path_lower.endswith(ext):
+            has_valid_ext = True
+            break
+    
+    if not has_valid_ext:
+        _, ext = os.path.splitext(file_path)
         return False, f"不支持的PDF格式: {ext}"
+    
+    # 验证PDF文件头（防止伪装的PDF文件）
+    try:
+        with open(file_path, 'rb') as f:
+            header = f.read(5)
+            if header != b'%PDF-':
+                return False, "不是有效的PDF文件格式"
+    except Exception as e:
+        return False, f"读取文件头失败: {str(e)}"
     
     # 尝试打开PDF验证格式
     try:
         doc = fitz.open(file_path)
         page_count = len(doc)
-        doc.close()
         
         if page_count <= 0:
+            doc.close()
             return False, "PDF文件没有有效页面"
         
+        # 检查每个页面是否可访问
+        for i in range(min(page_count, 10)):  # 只检查前10页
+            try:
+                page = doc.load_page(i)
+                _ = page.get_text()  # 尝试读取页面内容
+            except Exception as e:
+                doc.close()
+                return False, f"PDF第{i+1}页损坏: {str(e)}"
+        
+        doc.close()
         return True, f"验证通过，共 {page_count} 页"
     except Exception as e:
-        return False, f"PDF文件损坏: {str(e)}"
+        return False, f"PDF文件验证失败: {str(e)}"
 
 
 def create_temp_directory(prefix: str = "stamp_remover_") -> str:

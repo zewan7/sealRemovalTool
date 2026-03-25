@@ -14,10 +14,20 @@ logger = logging.getLogger(__name__)
 class ThreadManager(QObject):
     """线程管理器"""
     
+    _instance = None
+    
+    @classmethod
+    def instance(cls) -> 'ThreadManager':
+        """获取单例实例"""
+        if cls._instance is None:
+            cls._instance = ThreadManager()
+        return cls._instance
+    
     def __init__(self):
         super().__init__()
         self._threads: Dict[str, QThread] = {}
         self._thread_states: Dict[str, bool] = {}
+        self._thread_results: Dict[str, Any] = {}
         
     def register_thread(self, name: str, thread: QThread) -> None:
         """注册线程"""
@@ -130,4 +140,68 @@ class ThreadManager(QObject):
     def __del__(self):
         """析构函数"""
         self.cleanup_all()
+    
+    def stop_all_threads(self) -> None:
+        """停止所有线程"""
+        for name in list(self._threads.keys()):
+            self.stop_thread(name)
+        logger.info("停止所有线程完成")
+    
+    def get_running_threads(self) -> list:
+        """获取所有正在运行的线程名称"""
+        running = []
+        for name, thread in self._threads.items():
+            if thread.isRunning():
+                running.append(name)
+        return running
+    
+    def get_thread_count(self) -> int:
+        """获取线程总数"""
+        return len(self._threads)
+    
+    def get_running_count(self) -> int:
+        """获取正在运行的线程数"""
+        count = 0
+        for thread in self._threads.values():
+            if thread.isRunning():
+                count += 1
+        return count
+    
+    def wait_for_thread(self, name: str, timeout: int = 30000) -> bool:
+        """等待线程完成"""
+        if name not in self._threads:
+            logger.error(f"线程 {name} 未注册")
+            return False
+        
+        thread = self._threads[name]
+        if thread.isRunning():
+            return thread.wait(timeout)
+        return True
+    
+    def wait_for_all(self, timeout: int = 30000) -> bool:
+        """等待所有线程完成"""
+        all_finished = True
+        for name in self._threads:
+            if not self.wait_for_thread(name, timeout):
+                all_finished = False
+        return all_finished
+    
+    def has_thread(self, name: str) -> bool:
+        """检查线程是否存在"""
+        return name in self._threads
+    
+    def unregister_thread(self, name: str) -> bool:
+        """取消注册线程"""
+        if name not in self._threads:
+            logger.warning(f"线程 {name} 未注册")
+            return False
+        
+        self.stop_thread(name)
+        thread = self._threads[name]
+        thread.deleteLater()
+        del self._threads[name]
+        if name in self._thread_states:
+            del self._thread_states[name]
+        logger.info(f"取消注册线程: {name}")
+        return True
 
