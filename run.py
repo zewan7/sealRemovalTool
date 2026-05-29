@@ -11,14 +11,17 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-try:
-    from stamp_remover.main import main
-    sys.exit(main())
-except ImportError as e:
-    print(f"导入错误: {e}")
-    print("请确保已安装所有依赖: pip install -r requirements.txt")
-    sys.exit(1)
-except Exception as e:
-    print(f"启动失败: {e}")
-    sys.exit(1)
+if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()
+    try:
+        from stamp_remover.main import main
+        sys.exit(main())
+    except ImportError as e:
+        print(f"导入错误: {e}")
+        print("请确保已安装所有依赖: pip install -r requirements.txt")
+        sys.exit(1)
+    except Exception as e:
+        print(f"启动失败: {e}")
+        sys.exit(1)
 

@@ -10,13 +10,29 @@ import tempfile
 import os
 import logging
 from typing import List, Optional, Tuple
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import io
 from PIL import Image
 import time
 import concurrent.futures
 
 logger = logging.getLogger(__name__)
+
+def _process_pdf_page_worker(args: Tuple[str, int, int, str]) -> Tuple[int, str]:
+    """独立进程工作函数：处理单个页面并保存到临时磁盘文件，避免内存爆满"""
+    pdf_path, page_num, dpi, temp_dir = args
+    try:
+        with fitz.open(pdf_path) as doc:
+            page = doc.load_page(page_num)
+            pix = page.get_pixmap(dpi=dpi)
+            
+            # 保存到临时文件
+            out_path = os.path.join(temp_dir, f"page_{page_num}.png")
+            pix.save(out_path)
+            
+        return page_num, out_path
+    except Exception as e:
+        return page_num, e
 
 
 class PdfProcessingThread(QThread):
@@ -57,22 +73,14 @@ class PdfProcessingThread(QThread):
         if self.max_workers <= 0:
             raise ValueError("工作线程数必须大于0")
 
-    def _process_single_page(self, args: Tuple[int, fitz.Page]) -> Tuple[int, bytes]:
-        """处理单个页面（用于多线程）"""
-        page_num, page = args
-        try:
-            # 转换为图片
-            pix = page.get_pixmap(dpi=self.dpi)
-            
-            # 将图片数据转换为字节流，而不是保存到文件
-            img_data = pix.tobytes("png")
-            
-            logger.info(f"第 {page_num + 1} 页处理完成")
-            return page_num, img_data
-            
-        except Exception as e:
-            logger.error(f"处理第 {page_num + 1} 页时出错: {e}")
-            raise e
+    def _process_single_page(self, args: Tuple[str, int, int, str]) -> Tuple[int, str]:
+        """单线程调用辅助函数"""
+        page_num, result = _process_pdf_page_worker(args)
+        if isinstance(result, Exception):
+            logger.error(f"处理第 {page_num + 1} 页时出错: {result}")
+            raise result
+        logger.info(f"第 {page_num + 1} 页处理完成")
+        return page_num, result
 
     def run(self):
         """执行PDF处理"""
@@ -93,14 +101,18 @@ class PdfProcessingThread(QThread):
             # 发送初始进度
             self.progress.emit(0, total_pages)
             
-            # 准备页面数据
-            pages_data = []
-            for i in range(total_pages):
-                page = doc.load_page(i)
-                pages_data.append((i, page))
+            # 创建临时目录存储图片
+            if not self.temp_dir:
+                self.temp_dir = tempfile.mkdtemp(prefix="stamp_remover_")
+                
+            # 准备页面参数（不再预先加载所有 fitz.Page 对象，极大节省内存）
+            pages_data = [(self.pdf_path, i, self.dpi, self.temp_dir) for i in range(total_pages)]
             
             output_images = []
             processed_count = 0
+            
+            # 立即关闭主线程的 doc，因为后续处理会在各自的线程内独立打开
+            doc.close()
             
             if self.max_workers > 1:
                 # 多线程模式：使用改进的进度跟踪
@@ -108,9 +120,6 @@ class PdfProcessingThread(QThread):
             else:
                 # 单线程模式：顺序处理，进度准确
                 self._process_singlethreaded(pages_data, total_pages, output_images)
-            
-            # 关闭文档
-            doc.close()
             
             # 按页面顺序排序结果
             output_images.sort(key=lambda x: x[0])
@@ -145,9 +154,10 @@ class PdfProcessingThread(QThread):
 
     def _process_singlethreaded(self, pages_data, total_pages, output_images):
         """单线程处理，进度准确"""
-        for i, (page_num, page) in enumerate(pages_data):
+        for i, args in enumerate(pages_data):
+            page_num = args[1]
             try:
-                page_num, img_data = self._process_single_page((page_num, page))
+                page_num, img_data = self._process_single_page(args)
                 output_images.append((page_num, img_data))
                 
                 # 发送准确进度
@@ -165,12 +175,12 @@ class PdfProcessingThread(QThread):
         completed_tasks = []
         active_tasks = {}
         
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             # 初始提交任务
             for _ in range(min(self.max_workers, len(task_queue))):
                 if task_queue:
                     page_data = task_queue.pop(0)
-                    future = executor.submit(self._process_single_page, page_data)
+                    future = executor.submit(_process_pdf_page_worker, page_data)
                     active_tasks[future] = page_data
             
             # 处理完成的任务并提交新任务
@@ -183,8 +193,11 @@ class PdfProcessingThread(QThread):
                 
                 for future in done:
                     try:
-                        page_num, img_data = future.result()
-                        completed_tasks.append((page_num, img_data))
+                        page_num, img_data_or_exc = future.result()
+                        if isinstance(img_data_or_exc, Exception):
+                            raise img_data_or_exc
+                            
+                        completed_tasks.append((page_num, img_data_or_exc))
                         
                         # 从活动任务中移除
                         del active_tasks[future]
@@ -197,14 +210,14 @@ class PdfProcessingThread(QThread):
                         
                     except Exception as e:
                         page_data = active_tasks[future]
-                        page_num = page_data[0]
+                        page_num = page_data[1]
                         logger.error(f"处理第 {page_num + 1} 页时出错: {e}")
                         del active_tasks[future]
                     
                     # 提交新任务
                     if task_queue:
                         new_page_data = task_queue.pop(0)
-                        new_future = executor.submit(self._process_single_page, new_page_data)
+                        new_future = executor.submit(_process_pdf_page_worker, new_page_data)
                         active_tasks[new_future] = new_page_data
         
         # 将完成的任务添加到输出列表
@@ -233,7 +246,7 @@ class PdfRegenerationThread(QThread):
     progress = Signal(int, int)       # 当前进度，总页数
     error = Signal(str)               # 错误信息
 
-    def __init__(self, pdf_images_data: List[bytes], save_path: str, 
+    def __init__(self, pdf_images_data: list, save_path: str, 
                  threshold: int = 185, channel_index: int = 0,
                  enable_contrast: bool = False, enable_sharpness: bool = False,
                  max_workers: int = 4):
@@ -266,12 +279,15 @@ class PdfRegenerationThread(QThread):
         if self.max_workers <= 0:
             raise ValueError("工作线程数必须大于0")
 
-    def _process_single_image(self, args: Tuple[int, bytes]) -> Tuple[int, Image.Image]:
+    def _process_single_image(self, args: Tuple[int, str]) -> Tuple[int, Image.Image]:
         """处理单个图像（用于多线程）"""
         page_num, img_data = args
         try:
-            # 从字节数据创建PIL图像
-            pil_img = Image.open(io.BytesIO(img_data))
+            # 判断传入的是文件路径还是字节流
+            if isinstance(img_data, str):
+                pil_img = Image.open(img_data)
+            else:
+                pil_img = Image.open(io.BytesIO(img_data))
             
             # 应用图像增强
             if self.enable_contrast:

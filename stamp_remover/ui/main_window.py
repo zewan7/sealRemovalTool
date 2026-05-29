@@ -34,7 +34,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.setFixedSize(self.size())
+        self.setMinimumSize(self.size())
         self.setWindowIcon(QIcon("stamp_remover/ico/f.ico"))
         self._init_ui()
         self._init_thread_manager()
@@ -319,8 +319,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.progress_label.setVisible(False)  # 隐藏进度标签
         self.status_label.setVisible(False)    # 隐藏状态标签
         
-        # 从配置文件读取设置
-        max_workers = PDF_PROCESSING_CONFIG.get('max_workers', 4)
+        # 获取真实的CPU核心数，减1以保留一个核心给系统，避免完全卡死
+        import os
+        max_workers = max(1, (os.cpu_count() or 4) - 1)
         enable_multithreading = PDF_PROCESSING_CONFIG.get('enable_multithreading', True)
         
         # 创建PDF处理线程
@@ -415,13 +416,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if 0 <= image_index < len(self.pdf_images_data):
             img_data = self.pdf_images_data[image_index]
             
-            # 将字节数据转换为QPixmap
+            # 将字节数据或文件路径转换为QPixmap
             from PIL import Image
             import io
             from PIL.ImageQt import ImageQt
             
-            # 从字节数据创建PIL图像
-            pil_img = Image.open(io.BytesIO(img_data))
+            # 创建PIL图像
+            if isinstance(img_data, str):
+                pil_img = Image.open(img_data)
+            else:
+                pil_img = Image.open(io.BytesIO(img_data))
+            
             # 转换为RGBA模式以确保兼容性
             if pil_img.mode != 'RGBA':
                 pil_img = pil_img.convert('RGBA')
@@ -557,8 +562,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             enable_contrast = self.checkBox_3.isChecked()
             enable_sharpness = self.checkBox_4.isChecked()
             
-            # 从配置文件读取线程数
-            max_workers = PDF_PROCESSING_CONFIG.get('max_workers', 4)
+            # 获取真实的CPU核心数，减1以保留一个核心给系统，避免完全卡死
+            import os
+            max_workers = max(1, (os.cpu_count() or 4) - 1)
             
             # 创建PDF重新生成线程
             self.pdf_regeneration_thread = PdfRegenerationThread(
